@@ -1,0 +1,24 @@
+{
+	"$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"factoryName": {
+			"value": "adf-proyecto-7376905"
+		},
+		"sa_ventas_raw_connectionString": {
+			"value": ""
+		},
+		"sql_dw_ventas_password": {
+			"value": ""
+		},
+		"sql_dw_ventas_properties_typeProperties_server": {
+			"value": "sql-proyecto-7376905.database.windows.net"
+		},
+		"sql_dw_ventas_properties_typeProperties_database": {
+			"value": "dw-ventas"
+		},
+		"sql_dw_ventas_properties_typeProperties_userName": {
+			"value": "vanessa"
+		}
+	}
+}
