@@ -1,5 +1,5 @@
 {
-	"name": "gold_df_dim_productos",
+	"name": "gold_df_dim_key_cat",
 	"properties": {
 		"folder": {
 			"name": "GOLD"
@@ -13,18 +13,34 @@
 						"type": "DatasetReference"
 					},
 					"name": "source1"
+				},
+				{
+					"dataset": {
+						"referenceName": "silver_sql_productos_cat",
+						"type": "DatasetReference"
+					},
+					"name": "source2"
 				}
 			],
 			"sinks": [
 				{
 					"dataset": {
-						"referenceName": "gold_sql_dim_productos",
+						"referenceName": "gold_sql_dim_key_cat",
 						"type": "DatasetReference"
 					},
 					"name": "sink1"
 				}
 			],
 			"transformations": [
+				{
+					"name": "select1"
+				},
+				{
+					"name": "select2"
+				},
+				{
+					"name": "union1"
+				},
 				{
 					"name": "aggregate1"
 				}
@@ -42,17 +58,33 @@
 				"     validateSchema: false,",
 				"     isolationLevel: 'READ_UNCOMMITTED',",
 				"     format: 'table') ~> source1",
-				"source1 aggregate(groupBy(prd_id),",
-				"     each(match(name!=\"prd_id\"), $$ = first($$))) ~> aggregate1",
+				"source(output(",
+				"          ID as string,",
+				"          CAT as string,",
+				"          SUBCAT as string,",
+				"          MAINTENANCE as string",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     isolationLevel: 'READ_UNCOMMITTED',",
+				"     format: 'table') ~> source2",
+				"source1 select(mapColumn(",
+				"          prd_key_cat",
+				"     ),",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> select1",
+				"source2 select(mapColumn(",
+				"          prd_key_cat = ID",
+				"     ),",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> select2",
+				"select1, select2 union(byName: true)~> union1",
+				"union1 aggregate(groupBy(prd_key_cat),",
+				"     each(match(name != 'prd_key_cat'), $$ = first($$))) ~> aggregate1",
 				"aggregate1 sink(allowSchemaDrift: true,",
 				"     validateSchema: false,",
 				"     input(",
-				"          prd_id as integer,",
-				"          prd_key_cat as string,",
-				"          prd_key_ven as string,",
-				"          prd_nm as string,",
-				"          prd_cost as integer,",
-				"          prd_line as string",
+				"          prd_key_cat as string",
 				"     ),",
 				"     deletable:false,",
 				"     insertable:true,",
@@ -63,12 +95,7 @@
 				"     skipDuplicateMapOutputs: true,",
 				"     errorHandlingOption: 'stopOnFirstError',",
 				"     mapColumn(",
-				"          prd_id,",
-				"          prd_key_cat,",
-				"          prd_key_ven,",
-				"          prd_nm,",
-				"          prd_cost,",
-				"          prd_line",
+				"          prd_key_cat",
 				"     )) ~> sink1"
 			]
 		}

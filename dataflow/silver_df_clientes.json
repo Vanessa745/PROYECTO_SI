@@ -13,6 +13,13 @@
 						"type": "DatasetReference"
 					},
 					"name": "source1"
+				},
+				{
+					"dataset": {
+						"referenceName": "silver_sql_detalle_ventas",
+						"type": "DatasetReference"
+					},
+					"name": "source2"
 				}
 			],
 			"sinks": [
@@ -36,6 +43,15 @@
 				},
 				{
 					"name": "sort1"
+				},
+				{
+					"name": "select2"
+				},
+				{
+					"name": "union1"
+				},
+				{
+					"name": "sort2"
 				}
 			],
 			"scriptLines": [
@@ -51,6 +67,20 @@
 				"     validateSchema: false,",
 				"     isolationLevel: 'READ_UNCOMMITTED',",
 				"     format: 'table') ~> source1",
+				"source(output(",
+				"          sls_ord_num as integer,",
+				"          sls_prd_key as string,",
+				"          sls_cust_id as integer,",
+				"          sls_order_dt as date,",
+				"          sls_ship_dt as date,",
+				"          sls_sales as integer,",
+				"          sls_quantity as integer,",
+				"          sls_price as integer",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     isolationLevel: 'READ_UNCOMMITTED',",
+				"     format: 'table') ~> source2",
 				"source1 select(mapColumn(",
 				"          cst_id,",
 				"          cst_firstname,",
@@ -69,7 +99,14 @@
 				"!isNull(cst_marital_status) && cst_marital_status != '' &&",
 				"!isNull(cst_gndr) && cst_gndr != '') ~> filter1",
 				"filter1 sort(asc(cst_id, true)) ~> sort1",
-				"sort1 sink(allowSchemaDrift: true,",
+				"source2 select(mapColumn(",
+				"          cst_id = sls_cust_id",
+				"     ),",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> select2",
+				"sort1, select2 union(byName: true)~> union1",
+				"union1 sort(asc(cst_firstname, true)) ~> sort2",
+				"sort2 sink(allowSchemaDrift: true,",
 				"     validateSchema: false,",
 				"     input(",
 				"          cst_id as integer,",
@@ -88,7 +125,7 @@
 				"     skipDuplicateMapOutputs: true,",
 				"     errorHandlingOption: 'stopOnFirstError',",
 				"     mapColumn(",
-				"          cst_id,",
+				"          cst_id = sls_cust_id,",
 				"          cst_firstname,",
 				"          cst_lastname,",
 				"          cst_marital_status,",
