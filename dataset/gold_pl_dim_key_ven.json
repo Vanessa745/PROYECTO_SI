@@ -1,0 +1,24 @@
+{
+	"name": "gold_pl_dim_key_ven",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "sql_dw_ventas",
+			"type": "LinkedServiceReference"
+		},
+		"folder": {
+			"name": "GOLD"
+		},
+		"annotations": [],
+		"type": "AzureSqlTable",
+		"schema": [
+			{
+				"name": "prd_key_ven",
+				"type": "varchar"
+			}
+		],
+		"typeProperties": {
+			"schema": "GOLD",
+			"table": "DIM_KEY_VEN"
+		}
+	}
+}
