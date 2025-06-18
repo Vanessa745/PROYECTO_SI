@@ -1187,6 +1187,9 @@
 						},
 						{
 							"name": "aggregate1"
+						},
+						{
+							"name": "filter1"
 						}
 					],
 					"scriptLines": [
@@ -1249,7 +1252,8 @@
 						"     broadcast: 'auto')~> join1",
 						"join1 aggregate(groupBy(sls_order_dt),",
 						"     each(match(name!=\"sls_order_dt\"), $$ = first($$))) ~> aggregate1",
-						"aggregate1 sink(allowSchemaDrift: true,",
+						"aggregate1 filter(!isNull(sls_order_dt)) ~> filter1",
+						"filter1 sink(allowSchemaDrift: true,",
 						"     validateSchema: false,",
 						"     input(",
 						"          date as date",
