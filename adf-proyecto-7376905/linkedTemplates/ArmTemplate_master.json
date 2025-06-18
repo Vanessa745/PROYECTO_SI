@@ -4,16 +4,16 @@
 	"parameters": {
 		"factoryName": {
 			"type": "string",
-			"metadata": "Nombre de instancia de Data Factory",
+			"metadata": "Data Factory name",
 			"defaultValue": "adf-proyecto-7376905"
 		},
 		"sa_ventas_raw_connectionString": {
 			"type": "secureString",
-			"metadata": "Cadena protegida para \"connectionString\"de \"sa_ventas_raw\""
+			"metadata": "Secure string for 'connectionString' of 'sa_ventas_raw'"
 		},
 		"sql_dw_ventas_password": {
 			"type": "secureString",
-			"metadata": "Cadena protegida para \"password\"de \"sql_dw_ventas\""
+			"metadata": "Secure string for 'password' of 'sql_dw_ventas'"
 		},
 		"sql_dw_ventas_properties_typeProperties_server": {
 			"type": "string",
@@ -29,11 +29,11 @@
 		},
 		"containerUri": {
 			"type": "string",
-			"metadata": "URI de la cuenta de almacenamiento que contiene las plantillas de ARM vinculadas."
+			"metadata": "URI to storage account containing linked ARM templates"
 		},
 		"containerSasToken": {
 			"type": "string",
-			"metadata": "Token de SAS para la cuenta de almacenamiento que contiene las plantillas de ARM vinculadas"
+			"metadata": "Sas token to storage account containing linked ARM templates"
 		}
 	},
 	"variables": {
@@ -72,6 +72,26 @@
 				}
 			},
 			"dependsOn": []
+		},
+		{
+			"name": "adf-proyecto-7376905_ArmTemplate_1",
+			"type": "Microsoft.Resources/deployments",
+			"apiVersion": "2024-03-01",
+			"properties": {
+				"mode": "incremental",
+				"templateLink": {
+					"uri": "[concat(parameters('containerUri'), '/ArmTemplate_1.json', parameters('containerSasToken'))]",
+					"contentVersion": "1.0.0.0"
+				},
+				"parameters": {
+					"factoryName": {
+						"value": "[parameters('factoryName')]"
+					}
+				}
+			},
+			"dependsOn": [
+				"[resourceId('Microsoft.Resources/deployments', 'adf-proyecto-7376905_ArmTemplate_0')]"
+			]
 		}
 	]
 }
