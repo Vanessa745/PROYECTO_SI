@@ -1,0 +1,84 @@
+{
+	"name": "silver_df_clientes_bd",
+	"properties": {
+		"folder": {
+			"name": "SILVER"
+		},
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"dataset": {
+						"referenceName": "bronze_sql_clientes_bd",
+						"type": "DatasetReference"
+					},
+					"name": "source1"
+				}
+			],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "silver_sql_clientes_bd",
+						"type": "DatasetReference"
+					},
+					"name": "sink1"
+				}
+			],
+			"transformations": [
+				{
+					"name": "derivedColumn1"
+				},
+				{
+					"name": "derivedColumn2"
+				},
+				{
+					"name": "filter1"
+				},
+				{
+					"name": "sort1"
+				}
+			],
+			"scriptLines": [
+				"source(output(",
+				"          CID as string,",
+				"          BDATE as string,",
+				"          GEN as string",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     isolationLevel: 'READ_UNCOMMITTED',",
+				"     format: 'table') ~> source1",
+				"source1 derive(CID = substring(CID, length(CID) - 4),",
+				"          BDATE = toDate(BDATE),",
+				"          GEN = substring(GEN, 0, 1)) ~> derivedColumn1",
+				"derivedColumn1 derive(CID = toInteger(CID),",
+				"          GEN = trim(GEN)) ~> derivedColumn2",
+				"derivedColumn2 filter(!isNull(CID) &&",
+				"!isNull(BDATE) &&",
+				"!isNull(GEN) && GEN!= '') ~> filter1",
+				"filter1 sort(asc(CID, true)) ~> sort1",
+				"sort1 sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     input(",
+				"          CID as integer,",
+				"          BDATE as date,",
+				"          GEN as string",
+				"     ),",
+				"     deletable:false,",
+				"     insertable:true,",
+				"     updateable:false,",
+				"     upsertable:false,",
+				"     truncate:true,",
+				"     format: 'table',",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     errorHandlingOption: 'stopOnFirstError',",
+				"     mapColumn(",
+				"          CID,",
+				"          BDATE,",
+				"          GEN",
+				"     )) ~> sink1"
+			]
+		}
+	}
+}
