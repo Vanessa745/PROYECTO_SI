@@ -1,5 +1,5 @@
 {
-	"name": "gold_df_mari_sta",
+	"name": "gold_df_dim_date",
 	"properties": {
 		"folder": {
 			"name": "GOLD"
@@ -9,7 +9,7 @@
 			"sources": [
 				{
 					"dataset": {
-						"referenceName": "silver_sql_clientes",
+						"referenceName": "silver_sql_clientes_bd",
 						"type": "DatasetReference"
 					},
 					"name": "source1"
@@ -18,7 +18,7 @@
 			"sinks": [
 				{
 					"dataset": {
-						"referenceName": "gold_sql_dim_mari_sta",
+						"referenceName": "gold_sql_dim_date",
 						"type": "DatasetReference"
 					},
 					"name": "sink1"
@@ -37,28 +37,26 @@
 			],
 			"scriptLines": [
 				"source(output(",
-				"          cst_id as integer,",
-				"          cst_firstname as string,",
-				"          cst_lastname as string,",
-				"          cst_marital_status as string,",
-				"          cst_gndr as string",
+				"          CID as integer,",
+				"          BDATE as date,",
+				"          GEN as string",
 				"     ),",
 				"     allowSchemaDrift: true,",
 				"     validateSchema: false,",
 				"     isolationLevel: 'READ_UNCOMMITTED',",
 				"     format: 'table') ~> source1",
 				"source1 select(mapColumn(",
-				"          cst_marital_status",
+				"          BDATE",
 				"     ),",
 				"     skipDuplicateMapInputs: true,",
 				"     skipDuplicateMapOutputs: true) ~> select1",
-				"select1 filter(!isNull(cst_marital_status)) ~> filter1",
-				"filter1 aggregate(groupBy(cst_marital_status),",
-				"     each(match(name != \"cst_marital_status\"), $$ = first($$))) ~> aggregate1",
+				"select1 filter(!isNull(BDATE)) ~> filter1",
+				"filter1 aggregate(groupBy(BDATE),",
+				"     each(match(name != 'BDATE'), $$ = first($$))) ~> aggregate1",
 				"aggregate1 sink(allowSchemaDrift: true,",
 				"     validateSchema: false,",
 				"     input(",
-				"          mari_sta as string",
+				"          date as date",
 				"     ),",
 				"     deletable:false,",
 				"     insertable:true,",
@@ -69,7 +67,7 @@
 				"     skipDuplicateMapOutputs: true,",
 				"     errorHandlingOption: 'stopOnFirstError',",
 				"     mapColumn(",
-				"          mari_sta = cst_marital_status",
+				"          date = BDATE",
 				"     )) ~> sink1"
 			]
 		}

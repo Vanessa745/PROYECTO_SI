@@ -1,5 +1,5 @@
 {
-	"name": "gold_df_mari_sta",
+	"name": "gold_df_dim_gnr",
 	"properties": {
 		"folder": {
 			"name": "GOLD"
@@ -18,7 +18,7 @@
 			"sinks": [
 				{
 					"dataset": {
-						"referenceName": "gold_sql_dim_mari_sta",
+						"referenceName": "gold_sql_dim_gnr",
 						"type": "DatasetReference"
 					},
 					"name": "sink1"
@@ -27,9 +27,6 @@
 			"transformations": [
 				{
 					"name": "select1"
-				},
-				{
-					"name": "filter1"
 				},
 				{
 					"name": "aggregate1"
@@ -48,17 +45,16 @@
 				"     isolationLevel: 'READ_UNCOMMITTED',",
 				"     format: 'table') ~> source1",
 				"source1 select(mapColumn(",
-				"          cst_marital_status",
+				"          cst_gndr",
 				"     ),",
 				"     skipDuplicateMapInputs: true,",
 				"     skipDuplicateMapOutputs: true) ~> select1",
-				"select1 filter(!isNull(cst_marital_status)) ~> filter1",
-				"filter1 aggregate(groupBy(cst_marital_status),",
-				"     each(match(name != \"cst_marital_status\"), $$ = first($$))) ~> aggregate1",
+				"select1 aggregate(groupBy(cst_gndr),",
+				"     each(match(name != 'cst_gndr'), $$ = first($$))) ~> aggregate1",
 				"aggregate1 sink(allowSchemaDrift: true,",
 				"     validateSchema: false,",
 				"     input(",
-				"          mari_sta as string",
+				"          gndr as string",
 				"     ),",
 				"     deletable:false,",
 				"     insertable:true,",
@@ -69,7 +65,7 @@
 				"     skipDuplicateMapOutputs: true,",
 				"     errorHandlingOption: 'stopOnFirstError',",
 				"     mapColumn(",
-				"          mari_sta = cst_marital_status",
+				"          gndr = cst_gndr",
 				"     )) ~> sink1"
 			]
 		}

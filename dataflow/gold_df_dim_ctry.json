@@ -1,5 +1,5 @@
 {
-	"name": "gold_df_mari_sta",
+	"name": "gold_df_dim_ctry",
 	"properties": {
 		"folder": {
 			"name": "GOLD"
@@ -9,7 +9,7 @@
 			"sources": [
 				{
 					"dataset": {
-						"referenceName": "silver_sql_clientes",
+						"referenceName": "silver_sql_clientes_loc",
 						"type": "DatasetReference"
 					},
 					"name": "source1"
@@ -18,7 +18,7 @@
 			"sinks": [
 				{
 					"dataset": {
-						"referenceName": "gold_sql_dim_mari_sta",
+						"referenceName": "gold_sql_dim_country",
 						"type": "DatasetReference"
 					},
 					"name": "sink1"
@@ -33,32 +33,33 @@
 				},
 				{
 					"name": "aggregate1"
+				},
+				{
+					"name": "derivedColumn1"
 				}
 			],
 			"scriptLines": [
 				"source(output(",
-				"          cst_id as integer,",
-				"          cst_firstname as string,",
-				"          cst_lastname as string,",
-				"          cst_marital_status as string,",
-				"          cst_gndr as string",
+				"          CID as integer,",
+				"          CNTRY as string",
 				"     ),",
 				"     allowSchemaDrift: true,",
 				"     validateSchema: false,",
 				"     isolationLevel: 'READ_UNCOMMITTED',",
 				"     format: 'table') ~> source1",
 				"source1 select(mapColumn(",
-				"          cst_marital_status",
+				"          CNTRY",
 				"     ),",
 				"     skipDuplicateMapInputs: true,",
 				"     skipDuplicateMapOutputs: true) ~> select1",
-				"select1 filter(!isNull(cst_marital_status)) ~> filter1",
-				"filter1 aggregate(groupBy(cst_marital_status),",
-				"     each(match(name != \"cst_marital_status\"), $$ = first($$))) ~> aggregate1",
+				"select1 filter(!isNull(CNTRY)) ~> filter1",
+				"derivedColumn1 aggregate(groupBy(CNTRY),",
+				"     each(match(name != 'CNTRY'), $$ = first($$))) ~> aggregate1",
+				"filter1 derive(CNTRY = lower(trim(CNTRY))) ~> derivedColumn1",
 				"aggregate1 sink(allowSchemaDrift: true,",
 				"     validateSchema: false,",
 				"     input(",
-				"          mari_sta as string",
+				"          country as string",
 				"     ),",
 				"     deletable:false,",
 				"     insertable:true,",
@@ -69,7 +70,7 @@
 				"     skipDuplicateMapOutputs: true,",
 				"     errorHandlingOption: 'stopOnFirstError',",
 				"     mapColumn(",
-				"          mari_sta = cst_marital_status",
+				"          country = CNTRY",
 				"     )) ~> sink1"
 			]
 		}
