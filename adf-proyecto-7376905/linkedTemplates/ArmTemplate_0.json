@@ -68,23 +68,6 @@
 			"dependsOn": []
 		},
 		{
-			"name": "[concat(parameters('factoryName'), '/dataflow1')]",
-			"type": "Microsoft.DataFactory/factories/dataflows",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"type": "MappingDataFlow",
-				"typeProperties": {
-					"sources": [],
-					"sinks": [],
-					"transformations": [],
-					"scriptLines": [
-						""
-					]
-				}
-			},
-			"dependsOn": []
-		},
-		{
 			"name": "[concat(parameters('factoryName'), '/bronze_sql_clientes')]",
 			"type": "Microsoft.DataFactory/factories/datasets",
 			"apiVersion": "2018-06-01",
@@ -817,6 +800,57 @@
 				"typeProperties": {
 					"schema": "GOLD",
 					"table": "DIM_PRODUCTOS_CAT"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/sql_dw_ventas')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/gold_sql_dim_productos')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "sql_dw_ventas",
+					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "GOLD"
+				},
+				"annotations": [],
+				"type": "AzureSqlTable",
+				"schema": [
+					{
+						"name": "prd_id",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "prd_key_cat",
+						"type": "varchar"
+					},
+					{
+						"name": "prd_key_ven",
+						"type": "varchar"
+					},
+					{
+						"name": "prd_nm",
+						"type": "varchar"
+					},
+					{
+						"name": "prd_cost",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "prd_line",
+						"type": "char"
+					}
+				],
+				"typeProperties": {
+					"schema": "GOLD",
+					"table": "DIM_PRODUCTOS"
 				}
 			},
 			"dependsOn": [

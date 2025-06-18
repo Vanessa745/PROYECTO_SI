@@ -13,55 +13,6 @@
 	},
 	"resources": [
 		{
-			"name": "[concat(parameters('factoryName'), '/gold_sql_dim_productos')]",
-			"type": "Microsoft.DataFactory/factories/datasets",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"linkedServiceName": {
-					"referenceName": "sql_dw_ventas",
-					"type": "LinkedServiceReference"
-				},
-				"folder": {
-					"name": "GOLD"
-				},
-				"annotations": [],
-				"type": "AzureSqlTable",
-				"schema": [
-					{
-						"name": "prd_id",
-						"type": "int",
-						"precision": 10
-					},
-					{
-						"name": "prd_key_cat",
-						"type": "varchar"
-					},
-					{
-						"name": "prd_key_ven",
-						"type": "varchar"
-					},
-					{
-						"name": "prd_nm",
-						"type": "varchar"
-					},
-					{
-						"name": "prd_cost",
-						"type": "int",
-						"precision": 10
-					},
-					{
-						"name": "prd_line",
-						"type": "char"
-					}
-				],
-				"typeProperties": {
-					"schema": "GOLD",
-					"table": "DIM_PRODUCTOS"
-				}
-			},
-			"dependsOn": []
-		},
-		{
 			"name": "[concat(parameters('factoryName'), '/productos_cat_csv')]",
 			"type": "Microsoft.DataFactory/factories/datasets",
 			"apiVersion": "2018-06-01",
@@ -833,6 +784,83 @@
 			},
 			"dependsOn": [
 				"[concat(variables('factoryId'), '/datasets/productos_cat_csv')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/gold_df_mari_sta')]",
+			"type": "Microsoft.DataFactory/factories/dataflows",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"folder": {
+					"name": "GOLD"
+				},
+				"type": "MappingDataFlow",
+				"typeProperties": {
+					"sources": [
+						{
+							"dataset": {
+								"referenceName": "silver_sql_clientes",
+								"type": "DatasetReference"
+							},
+							"name": "source1"
+						}
+					],
+					"sinks": [
+						{
+							"dataset": {
+								"referenceName": "gold_sql_dim_mari_sta",
+								"type": "DatasetReference"
+							},
+							"name": "sink1"
+						}
+					],
+					"transformations": [
+						{
+							"name": "select1"
+						},
+						{
+							"name": "filter1"
+						}
+					],
+					"scriptLines": [
+						"source(output(",
+						"          cst_id as integer,",
+						"          cst_firstname as string,",
+						"          cst_lastname as string,",
+						"          cst_marital_status as string,",
+						"          cst_gndr as string",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     isolationLevel: 'READ_UNCOMMITTED',",
+						"     format: 'table') ~> source1",
+						"source1 select(mapColumn(",
+						"          cst_marital_status",
+						"     ),",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true) ~> select1",
+						"select1 filter(!isNull(cst_marital_status)) ~> filter1",
+						"filter1 sink(allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     input(",
+						"          mari_sta as string",
+						"     ),",
+						"     deletable:false,",
+						"     insertable:true,",
+						"     updateable:false,",
+						"     upsertable:false,",
+						"     format: 'table',",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true,",
+						"     errorHandlingOption: 'stopOnFirstError',",
+						"     mapColumn(",
+						"          mari_sta = cst_marital_status",
+						"     )) ~> sink1"
+					]
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/datasets/silver_sql_clientes')]"
 			]
 		},
 		{
