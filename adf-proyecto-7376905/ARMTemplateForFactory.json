@@ -1240,6 +1240,7 @@
 								"parameters": {},
 								"datasetParameters": {
 									"source1": {},
+									"source2": {},
 									"sink1": {}
 								}
 							},
@@ -2201,6 +2202,35 @@
 				"typeProperties": {
 					"schema": "GOLD",
 					"table": "DIM_GNR"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/sql_dw_ventas')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/gold_sql_dim_key_cat')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "sql_dw_ventas",
+					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "GOLD"
+				},
+				"annotations": [],
+				"type": "AzureSqlTable",
+				"schema": [
+					{
+						"name": "prd_key_cat",
+						"type": "varchar"
+					}
+				],
+				"typeProperties": {
+					"schema": "GOLD",
+					"table": "DIM_KEY_CAT"
 				}
 			},
 			"dependsOn": [
@@ -3692,6 +3722,116 @@
 			]
 		},
 		{
+			"name": "[concat(parameters('factoryName'), '/gold_df_dim_key_cat')]",
+			"type": "Microsoft.DataFactory/factories/dataflows",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"folder": {
+					"name": "GOLD"
+				},
+				"type": "MappingDataFlow",
+				"typeProperties": {
+					"sources": [
+						{
+							"dataset": {
+								"referenceName": "silver_sql_productos",
+								"type": "DatasetReference"
+							},
+							"name": "source1"
+						},
+						{
+							"dataset": {
+								"referenceName": "silver_sql_productos_cat",
+								"type": "DatasetReference"
+							},
+							"name": "source2"
+						}
+					],
+					"sinks": [
+						{
+							"dataset": {
+								"referenceName": "gold_sql_dim_key_cat",
+								"type": "DatasetReference"
+							},
+							"name": "sink1"
+						}
+					],
+					"transformations": [
+						{
+							"name": "select1"
+						},
+						{
+							"name": "select2"
+						},
+						{
+							"name": "union1"
+						},
+						{
+							"name": "aggregate1"
+						}
+					],
+					"scriptLines": [
+						"source(output(",
+						"          prd_id as integer,",
+						"          prd_key_cat as string,",
+						"          prd_key_ven as string,",
+						"          prd_nm as string,",
+						"          prd_cost as integer,",
+						"          prd_line as string",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     isolationLevel: 'READ_UNCOMMITTED',",
+						"     format: 'table') ~> source1",
+						"source(output(",
+						"          ID as string,",
+						"          CAT as string,",
+						"          SUBCAT as string,",
+						"          MAINTENANCE as string",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     isolationLevel: 'READ_UNCOMMITTED',",
+						"     format: 'table') ~> source2",
+						"source1 select(mapColumn(",
+						"          prd_key_cat",
+						"     ),",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true) ~> select1",
+						"source2 select(mapColumn(",
+						"          prd_key_cat = ID",
+						"     ),",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true) ~> select2",
+						"select1, select2 union(byName: true)~> union1",
+						"union1 aggregate(groupBy(prd_key_cat),",
+						"     each(match(name!='prd_key_cat'), $$ = first($$))) ~> aggregate1",
+						"aggregate1 sink(allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     input(",
+						"          prd_key_cat as string",
+						"     ),",
+						"     deletable:false,",
+						"     insertable:true,",
+						"     updateable:false,",
+						"     upsertable:false,",
+						"     format: 'table',",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true,",
+						"     errorHandlingOption: 'stopOnFirstError',",
+						"     mapColumn(",
+						"          prd_key_cat",
+						"     )) ~> sink1"
+					]
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/datasets/silver_sql_productos')]",
+				"[concat(variables('factoryId'), '/datasets/silver_sql_productos_cat')]",
+				"[concat(variables('factoryId'), '/datasets/gold_sql_dim_key_cat')]"
+			]
+		},
+		{
 			"name": "[concat(parameters('factoryName'), '/gold_df_dim_key_ven')]",
 			"type": "Microsoft.DataFactory/factories/dataflows",
 			"apiVersion": "2018-06-01",
@@ -3810,9 +3950,6 @@
 					"transformations": [
 						{
 							"name": "aggregate1"
-						},
-						{
-							"name": "filter1"
 						}
 					],
 					"scriptLines": [
@@ -3830,8 +3967,7 @@
 						"     format: 'table') ~> source1",
 						"source1 aggregate(groupBy(prd_id),",
 						"     each(match(name!=\"prd_id\"), $$ = first($$))) ~> aggregate1",
-						"aggregate1 filter(prd_key_cat != 'CO-PE') ~> filter1",
-						"filter1 sink(allowSchemaDrift: true,",
+						"aggregate1 sink(allowSchemaDrift: true,",
 						"     validateSchema: false,",
 						"     input(",
 						"          prd_id as integer,",
@@ -4167,6 +4303,13 @@
 								"type": "DatasetReference"
 							},
 							"name": "source1"
+						},
+						{
+							"dataset": {
+								"referenceName": "silver_sql_detalle_ventas",
+								"type": "DatasetReference"
+							},
+							"name": "source2"
 						}
 					],
 					"sinks": [
@@ -4190,6 +4333,15 @@
 						},
 						{
 							"name": "sort1"
+						},
+						{
+							"name": "select2"
+						},
+						{
+							"name": "union1"
+						},
+						{
+							"name": "sort2"
 						}
 					],
 					"scriptLines": [
@@ -4205,6 +4357,20 @@
 						"     validateSchema: false,",
 						"     isolationLevel: 'READ_UNCOMMITTED',",
 						"     format: 'table') ~> source1",
+						"source(output(",
+						"          sls_ord_num as integer,",
+						"          sls_prd_key as string,",
+						"          sls_cust_id as integer,",
+						"          sls_order_dt as date,",
+						"          sls_ship_dt as date,",
+						"          sls_sales as integer,",
+						"          sls_quantity as integer,",
+						"          sls_price as integer",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     isolationLevel: 'READ_UNCOMMITTED',",
+						"     format: 'table') ~> source2",
 						"source1 select(mapColumn(",
 						"          cst_id,",
 						"          cst_firstname,",
@@ -4223,7 +4389,14 @@
 						"!isNull(cst_marital_status) && cst_marital_status != '' &&",
 						"!isNull(cst_gndr) && cst_gndr != '') ~> filter1",
 						"filter1 sort(asc(cst_id, true)) ~> sort1",
-						"sort1 sink(allowSchemaDrift: true,",
+						"source2 select(mapColumn(",
+						"          cst_id = sls_cust_id",
+						"     ),",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true) ~> select2",
+						"sort1, select2 union(byName: true)~> union1",
+						"union1 sort(asc(cst_firstname, true)) ~> sort2",
+						"sort2 sink(allowSchemaDrift: true,",
 						"     validateSchema: false,",
 						"     input(",
 						"          cst_id as integer,",
@@ -4253,6 +4426,7 @@
 			},
 			"dependsOn": [
 				"[concat(variables('factoryId'), '/datasets/bronze_sql_clientes')]",
+				"[concat(variables('factoryId'), '/datasets/silver_sql_detalle_ventas')]",
 				"[concat(variables('factoryId'), '/datasets/silver_sql_clientes')]"
 			]
 		},
