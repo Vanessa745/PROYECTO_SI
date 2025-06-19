@@ -125,7 +125,7 @@
 				"     skipDuplicateMapOutputs: true,",
 				"     errorHandlingOption: 'stopOnFirstError',",
 				"     mapColumn(",
-				"          cst_id = sls_cust_id,",
+				"          cst_id,",
 				"          cst_firstname,",
 				"          cst_lastname,",
 				"          cst_marital_status,",
