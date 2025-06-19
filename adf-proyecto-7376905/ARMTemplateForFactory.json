@@ -41,7 +41,14 @@
 					{
 						"name": "Data flow1",
 						"type": "ExecuteDataFlow",
-						"dependsOn": [],
+						"dependsOn": [
+							{
+								"activity": "Data flow11",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
 						"policy": {
 							"timeout": "0.12:00:00",
 							"retry": 0,
@@ -237,11 +244,13 @@
 						"userProperties": [],
 						"typeProperties": {
 							"dataflow": {
-								"referenceName": "bronze_df_clientes",
+								"referenceName": "gold_df_dim_clientes",
 								"type": "DataFlowReference",
 								"parameters": {},
 								"datasetParameters": {
 									"source1": {},
+									"source2": {},
+									"source3": {},
 									"sink1": {}
 								}
 							},
@@ -402,6 +411,37 @@
 							},
 							"traceLevel": "Fine"
 						}
+					},
+					{
+						"name": "Data flow11",
+						"type": "ExecuteDataFlow",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataflow": {
+								"referenceName": "gold_df_dim_key_cat",
+								"type": "DataFlowReference",
+								"parameters": {},
+								"datasetParameters": {
+									"source1": {},
+									"source2": {},
+									"sink1": {}
+								}
+							},
+							"staging": {},
+							"compute": {
+								"coreCount": 8,
+								"computeType": "General"
+							},
+							"traceLevel": "Fine"
+						}
 					}
 				],
 				"policy": {
@@ -418,11 +458,12 @@
 				"[concat(variables('factoryId'), '/dataflows/gold_df_dim_gnr')]",
 				"[concat(variables('factoryId'), '/dataflows/gold_df_dim_key_ven')]",
 				"[concat(variables('factoryId'), '/dataflows/gold_df_mari_sta')]",
-				"[concat(variables('factoryId'), '/dataflows/bronze_df_clientes')]",
+				"[concat(variables('factoryId'), '/dataflows/gold_df_dim_clientes')]",
 				"[concat(variables('factoryId'), '/dataflows/gold_df_dim_productos_cat')]",
 				"[concat(variables('factoryId'), '/dataflows/gold_df_dim_date_hdv')]",
 				"[concat(variables('factoryId'), '/dataflows/gold_df_dim_productos')]",
-				"[concat(variables('factoryId'), '/dataflows/gold_df_hechos_detalle_ventas')]"
+				"[concat(variables('factoryId'), '/dataflows/gold_df_hechos_detalle_ventas')]",
+				"[concat(variables('factoryId'), '/dataflows/gold_df_dim_key_cat')]"
 			]
 		},
 		{
@@ -815,6 +856,56 @@
 			},
 			"dependsOn": [
 				"[concat(variables('factoryId'), '/dataflows/gold_df_dim_gnr')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/gol_pl_dim_key_cat')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "Data flow1",
+						"type": "ExecuteDataFlow",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataflow": {
+								"referenceName": "gold_df_dim_key_cat",
+								"type": "DataFlowReference",
+								"parameters": {},
+								"datasetParameters": {
+									"source1": {},
+									"source2": {},
+									"sink1": {}
+								}
+							},
+							"staging": {},
+							"compute": {
+								"coreCount": 8,
+								"computeType": "General"
+							},
+							"traceLevel": "Fine"
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"folder": {
+					"name": "GOLD"
+				},
+				"annotations": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/dataflows/gold_df_dim_key_cat')]"
 			]
 		},
 		{
@@ -3674,6 +3765,9 @@
 						},
 						{
 							"name": "aggregate1"
+						},
+						{
+							"name": "filter1"
 						}
 					],
 					"scriptLines": [
@@ -3693,8 +3787,9 @@
 						"     ),",
 						"     skipDuplicateMapInputs: true,",
 						"     skipDuplicateMapOutputs: true) ~> select1",
-						"select1 aggregate(groupBy(cst_gndr),",
+						"filter1 aggregate(groupBy(cst_gndr),",
 						"     each(match(name!='cst_gndr'), $$ = first($$))) ~> aggregate1",
+						"select1 filter(!isNull(cst_gndr)) ~> filter1",
 						"aggregate1 sink(allowSchemaDrift: true,",
 						"     validateSchema: false,",
 						"     input(",

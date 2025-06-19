@@ -46,6 +46,9 @@
 						},
 						{
 							"name": "aggregate1"
+						},
+						{
+							"name": "filter1"
 						}
 					],
 					"scriptLines": [
@@ -65,8 +68,9 @@
 						"     ),",
 						"     skipDuplicateMapInputs: true,",
 						"     skipDuplicateMapOutputs: true) ~> select1",
-						"select1 aggregate(groupBy(cst_gndr),",
+						"filter1 aggregate(groupBy(cst_gndr),",
 						"     each(match(name!='cst_gndr'), $$ = first($$))) ~> aggregate1",
+						"select1 filter(!isNull(cst_gndr)) ~> filter1",
 						"aggregate1 sink(allowSchemaDrift: true,",
 						"     validateSchema: false,",
 						"     input(",
@@ -1174,7 +1178,14 @@
 					{
 						"name": "Data flow1",
 						"type": "ExecuteDataFlow",
-						"dependsOn": [],
+						"dependsOn": [
+							{
+								"activity": "Data flow11",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
 						"policy": {
 							"timeout": "0.12:00:00",
 							"retry": 0,
@@ -1370,11 +1381,13 @@
 						"userProperties": [],
 						"typeProperties": {
 							"dataflow": {
-								"referenceName": "bronze_df_clientes",
+								"referenceName": "gold_df_dim_clientes",
 								"type": "DataFlowReference",
 								"parameters": {},
 								"datasetParameters": {
 									"source1": {},
+									"source2": {},
+									"source3": {},
 									"sink1": {}
 								}
 							},
@@ -1535,6 +1548,37 @@
 							},
 							"traceLevel": "Fine"
 						}
+					},
+					{
+						"name": "Data flow11",
+						"type": "ExecuteDataFlow",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataflow": {
+								"referenceName": "gold_df_dim_key_cat",
+								"type": "DataFlowReference",
+								"parameters": {},
+								"datasetParameters": {
+									"source1": {},
+									"source2": {},
+									"sink1": {}
+								}
+							},
+							"staging": {},
+							"compute": {
+								"coreCount": 8,
+								"computeType": "General"
+							},
+							"traceLevel": "Fine"
+						}
 					}
 				],
 				"policy": {
@@ -1551,7 +1595,8 @@
 				"[concat(variables('factoryId'), '/dataflows/gold_df_mari_sta')]",
 				"[concat(variables('factoryId'), '/dataflows/gold_df_dim_productos_cat')]",
 				"[concat(variables('factoryId'), '/dataflows/gold_df_dim_productos')]",
-				"[concat(variables('factoryId'), '/dataflows/gold_df_hechos_detalle_ventas')]"
+				"[concat(variables('factoryId'), '/dataflows/gold_df_hechos_detalle_ventas')]",
+				"[concat(variables('factoryId'), '/dataflows/gold_df_dim_key_cat')]"
 			]
 		},
 		{
