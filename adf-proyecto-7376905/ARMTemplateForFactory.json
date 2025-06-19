@@ -3366,12 +3366,12 @@
 						"     isolationLevel: 'READ_UNCOMMITTED',",
 						"     format: 'table') ~> source3",
 						"source1, source2 join(cst_id == CID,",
-						"     joinType:'inner',",
+						"     joinType:'left',",
 						"     matchType:'exact',",
 						"     ignoreSpaces: false,",
 						"     broadcast: 'auto')~> join1",
 						"join1, source3 join(cst_id == source3@CID,",
-						"     joinType:'inner',",
+						"     joinType:'left',",
 						"     matchType:'exact',",
 						"     ignoreSpaces: false,",
 						"     broadcast: 'auto')~> join2",
@@ -4202,11 +4202,7 @@
 							"name": "sink1"
 						}
 					],
-					"transformations": [
-						{
-							"name": "aggregate1"
-						}
-					],
+					"transformations": [],
 					"scriptLines": [
 						"source(output(",
 						"          sls_ord_num as integer,",
@@ -4222,9 +4218,7 @@
 						"     validateSchema: false,",
 						"     isolationLevel: 'READ_UNCOMMITTED',",
 						"     format: 'table') ~> source1",
-						"source1 aggregate(groupBy(sls_ord_num),",
-						"     each(match(name!=\"sls_ord_num\"), $$ = first($$))) ~> aggregate1",
-						"aggregate1 sink(allowSchemaDrift: true,",
+						"source1 sink(allowSchemaDrift: true,",
 						"     validateSchema: false,",
 						"     input(",
 						"          sls_ord_num as integer,",
@@ -4378,9 +4372,6 @@
 							"name": "derivedColumn1"
 						},
 						{
-							"name": "filter1"
-						},
-						{
 							"name": "sort1"
 						},
 						{
@@ -4390,7 +4381,10 @@
 							"name": "union1"
 						},
 						{
-							"name": "sort2"
+							"name": "filter1"
+						},
+						{
+							"name": "aggregate1"
 						}
 					],
 					"scriptLines": [
@@ -4432,20 +4426,17 @@
 						"select1 derive(cst_id = toInteger(cst_id),",
 						"          cst_marital_status = trim(cst_marital_status),",
 						"          cst_gndr = trim(cst_gndr)) ~> derivedColumn1",
-						"derivedColumn1 filter(!isNull(cst_id) &&",
-						"!isNull(cst_firstname) && cst_firstname != '' &&",
-						"!isNull(cst_lastname) && cst_lastname != '' &&",
-						"!isNull(cst_marital_status) && cst_marital_status != '' &&",
-						"!isNull(cst_gndr) && cst_gndr != '') ~> filter1",
-						"filter1 sort(asc(cst_id, true)) ~> sort1",
+						"derivedColumn1 sort(asc(cst_id, true)) ~> sort1",
 						"source2 select(mapColumn(",
 						"          cst_id = sls_cust_id",
 						"     ),",
 						"     skipDuplicateMapInputs: true,",
 						"     skipDuplicateMapOutputs: true) ~> select2",
 						"sort1, select2 union(byName: true)~> union1",
-						"union1 sort(asc(cst_firstname, true)) ~> sort2",
-						"sort2 sink(allowSchemaDrift: true,",
+						"union1 filter(!isNull(cst_id)) ~> filter1",
+						"filter1 aggregate(groupBy(cst_id),",
+						"     each(match(name!='cst_id'), $$ = first($$))) ~> aggregate1",
+						"aggregate1 sink(allowSchemaDrift: true,",
 						"     validateSchema: false,",
 						"     input(",
 						"          cst_id as integer,",
@@ -4531,7 +4522,7 @@
 						"     validateSchema: false,",
 						"     isolationLevel: 'READ_UNCOMMITTED',",
 						"     format: 'table') ~> source1",
-						"source1 derive(CID = substring(CID, length(CID) - 4),",
+						"source1 derive(CID = substring(trim(CID), length(CID) - 4),",
 						"          BDATE = toDate(BDATE),",
 						"          GEN = substring(GEN, 0, 1)) ~> derivedColumn1",
 						"derivedColumn1 derive(CID = toInteger(CID),",
@@ -4620,7 +4611,7 @@
 						"     validateSchema: false,",
 						"     isolationLevel: 'READ_UNCOMMITTED',",
 						"     format: 'table') ~> source1",
-						"source1 derive(CID = substring(CID, length(CID) - 4)) ~> derivedColumn1",
+						"source1 derive(CID = substring(trim(CID), length(CID) - 4)) ~> derivedColumn1",
 						"derivedColumn1 derive(CID = toInteger(CID)) ~> derivedColumn2",
 						"filter1 sort(asc(CID, true)) ~> sort1",
 						"derivedColumn2 filter(!isNull(CID) &&",
