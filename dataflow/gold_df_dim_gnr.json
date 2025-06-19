@@ -30,6 +30,9 @@
 				},
 				{
 					"name": "aggregate1"
+				},
+				{
+					"name": "filter1"
 				}
 			],
 			"scriptLines": [
@@ -49,8 +52,9 @@
 				"     ),",
 				"     skipDuplicateMapInputs: true,",
 				"     skipDuplicateMapOutputs: true) ~> select1",
-				"select1 aggregate(groupBy(cst_gndr),",
-				"     each(match(name != 'cst_gndr'), $$ = first($$))) ~> aggregate1",
+				"filter1 aggregate(groupBy(cst_gndr),",
+				"     each(match(name!='cst_gndr'), $$ = first($$))) ~> aggregate1",
+				"select1 filter(!isNull(cst_gndr)) ~> filter1",
 				"aggregate1 sink(allowSchemaDrift: true,",
 				"     validateSchema: false,",
 				"     input(",
