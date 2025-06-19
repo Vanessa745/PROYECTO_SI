@@ -48,7 +48,7 @@
 				"     validateSchema: false,",
 				"     isolationLevel: 'READ_UNCOMMITTED',",
 				"     format: 'table') ~> source1",
-				"source1 derive(CID = substring(CID, length(CID) - 4),",
+				"source1 derive(CID = substring(trim(CID), length(CID) - 4),",
 				"          BDATE = toDate(BDATE),",
 				"          GEN = substring(GEN, 0, 1)) ~> derivedColumn1",
 				"derivedColumn1 derive(CID = toInteger(CID),",

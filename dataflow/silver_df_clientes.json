@@ -39,9 +39,6 @@
 					"name": "derivedColumn1"
 				},
 				{
-					"name": "filter1"
-				},
-				{
 					"name": "sort1"
 				},
 				{
@@ -51,7 +48,10 @@
 					"name": "union1"
 				},
 				{
-					"name": "sort2"
+					"name": "filter1"
+				},
+				{
+					"name": "aggregate1"
 				}
 			],
 			"scriptLines": [
@@ -93,20 +93,17 @@
 				"select1 derive(cst_id = toInteger(cst_id),",
 				"          cst_marital_status = trim(cst_marital_status),",
 				"          cst_gndr = trim(cst_gndr)) ~> derivedColumn1",
-				"derivedColumn1 filter(!isNull(cst_id) &&",
-				"!isNull(cst_firstname) && cst_firstname != '' &&",
-				"!isNull(cst_lastname) && cst_lastname != '' &&",
-				"!isNull(cst_marital_status) && cst_marital_status != '' &&",
-				"!isNull(cst_gndr) && cst_gndr != '') ~> filter1",
-				"filter1 sort(asc(cst_id, true)) ~> sort1",
+				"derivedColumn1 sort(asc(cst_id, true)) ~> sort1",
 				"source2 select(mapColumn(",
 				"          cst_id = sls_cust_id",
 				"     ),",
 				"     skipDuplicateMapInputs: true,",
 				"     skipDuplicateMapOutputs: true) ~> select2",
 				"sort1, select2 union(byName: true)~> union1",
-				"union1 sort(asc(cst_firstname, true)) ~> sort2",
-				"sort2 sink(allowSchemaDrift: true,",
+				"union1 filter(!isNull(cst_id)) ~> filter1",
+				"filter1 aggregate(groupBy(cst_id),",
+				"     each(match(name!='cst_id'), $$ = first($$))) ~> aggregate1",
+				"aggregate1 sink(allowSchemaDrift: true,",
 				"     validateSchema: false,",
 				"     input(",
 				"          cst_id as integer,",

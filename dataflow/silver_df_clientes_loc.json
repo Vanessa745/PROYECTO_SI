@@ -47,7 +47,7 @@
 				"     validateSchema: false,",
 				"     isolationLevel: 'READ_UNCOMMITTED',",
 				"     format: 'table') ~> source1",
-				"source1 derive(CID = substring(CID, length(CID) - 4)) ~> derivedColumn1",
+				"source1 derive(CID = substring(trim(CID), length(CID) - 4)) ~> derivedColumn1",
 				"derivedColumn1 derive(CID = toInteger(CID)) ~> derivedColumn2",
 				"filter1 sort(asc(CID, true)) ~> sort1",
 				"derivedColumn2 filter(!isNull(CID) &&",
