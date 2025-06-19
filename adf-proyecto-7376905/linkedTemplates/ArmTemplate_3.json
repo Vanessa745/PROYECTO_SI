@@ -464,7 +464,6 @@
 								"parameters": {},
 								"datasetParameters": {
 									"source1": {},
-									"source2": {},
 									"sink1": {}
 								}
 							},
